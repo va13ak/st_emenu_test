@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>e-Menu</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div id="app">
+        <button v-on:click="getMenu">Get Menu</button>
+        <ul v-if="priceList && priceList.length">
+            <li v-if="parent !== emptyParent">
+                <button v-on:click="onClickBack">
+                    ...
+                </button>
+            </li>
+            <li v-for="priceItem in currentItems" class="priceList" v-bind:key="priceItem.code">
+                <button v-on:click="onClickItem" v-bind:id="priceItem.uuid">
+                    {{ getItemRepresentation(priceItem) }}
+                </button>
+            </li>
+        </ul>
+        <ul v-if="errors && errors.length">
+                <li v-for="(error, index) of errors" :key="index">
+                    {{error.message}}
+                </li>
+            </ul>
+        </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js" integrity="sha256-S1J4GVHHDMiirir9qsXWc8ZWw74PHHafpsHp5PXtjTs=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
