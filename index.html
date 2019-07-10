@@ -8,7 +8,7 @@
 
 <body>
     <div id="app">
-        <button v-on:click="getMenu">Get Menu</button>
+        <button v-on:click="getMenu">Update Menu</button>
         <ul v-if="priceList && priceList.length">
             <li v-if="parent !== emptyParent">
                 <button v-on:click="onClickBack">
@@ -16,20 +16,47 @@
                 </button>
             </li>
             <li v-for="priceItem in currentItems" class="priceList" v-bind:key="priceItem.code">
+                <p v-if="priceItem.hasPicture">has picture</p>
                 <button v-on:click="onClickItem" v-bind:id="priceItem.uuid">
                     {{ getItemRepresentation(priceItem) }}
                 </button>
             </li>
         </ul>
-        <ul v-if="errors && errors.length">
-                <li v-for="(error, index) of errors" :key="index">
-                    {{error.message}}
+        <div id="basket">
+            <h3>basket</h3>
+            <ul v-if="basket">
+                <li v-if="!basket.length">
+                    empty
+                </li>
+                <li v-for="priceItem in basket" class="basket" v-bind:key="priceItem.rowId"  v-bind:id="priceItem.rowId" v-if="priceItem && priceItem.count > 0">
+                    <button>
+                        {{ getBasketItemRepresentation(priceItem) }}
+                    </button>
+                    <button v-on:click="onIncBasketClick">
+                        +
+                    </button>
+                    <button v-on:click="onDecBasketClick">
+                            -
+                    </button>
+                    <button v-on:click="onRemoveFromBasketClick">
+                        X
+                    </button>
                 </li>
             </ul>
+            <button v-on:click="onClickSendOrder">
+                Send order
+            </button>
         </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js" integrity="sha256-S1J4GVHHDMiirir9qsXWc8ZWw74PHHafpsHp5PXtjTs=" crossorigin="anonymous"></script>
+        <ul v-if="errors && errors.length">
+            <li v-for="(error, index) of errors" :key="index">
+                {{error.message}}
+            </li>
+        </ul>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"
+        integrity="sha256-S1J4GVHHDMiirir9qsXWc8ZWw74PHHafpsHp5PXtjTs=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="main.js"></script>
+    <script src="main.js" type="module"></script>
 </body>
 
 </html>

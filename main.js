@@ -1,3 +1,5 @@
+//import { parameters as config } from './config.js';
+
 var app = new Vue({
     el: "#app",
 
@@ -5,6 +7,7 @@ var app = new Vue({
         emptyParent: '00000000-0000-0000-0000-000000000000',
         swiperSlides: [],
         priceList: [],
+        basket: [],
         parent: null,
         errors: []
     },
@@ -22,17 +25,22 @@ var app = new Vue({
 
     methods: {
         init: function () {
-            for (i = 0; i < 10; i++) {
+            for (let i = 0; i < 10; i++) {
                 this.swiperSlides.push({
                     id: i,
                     name: `Slide ${(i + 1)}`,
                     image: `image${(i + 1)}.jpg`
                 })
             }
+            this.getMenu();
         },
 
         getItemRepresentation: function (item) {
             return "(" + item.code + ") " + item.name + (item.isGroup ? "" : " -- " + item.price);
+        },
+
+        getBasketItemRepresentation: function(item) {
+            return "(" + item.code + ") " + item.name + " --- " + item.count + "x" + item.price + " : " + item.sum;
         },
 
         onClickItem: function(event) {
@@ -40,9 +48,39 @@ var app = new Vue({
             if (obj) {
                 if (obj.isGroup) {
                     this.parent = obj.uuid;
+                } else {
+                    this.addItemToBasket(obj);
                 }
             }
         },
+
+        onRemoveFromBasketClick: function(event) {
+            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            if (obj) {
+                //this.basket.splice(this.basket.indexOf(obj), 1);
+                obj.count = 0;
+                this.updateBasketItemSum(obj);
+            }
+        },
+        
+        onIncBasketClick: function(event) {
+            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            if (obj) {
+                obj.count += 1;
+                this.updateBasketItemSum(obj);
+            }
+        },
+
+        onDecBasketClick: function(event) {
+            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            if (obj)
+                if (obj.count > 1)
+                    obj.count -= 1;
+                else
+                    obj.count = 0;
+                this.updateBasketItemSum(obj);
+        },
+
         onClickBack: function(event) {
             if (this.parent === this.enptyParent) return;
 
@@ -51,6 +89,36 @@ var app = new Vue({
                 this.parent = obj.parent;
             else
                 this.parent = this.emptyParent;
+        },
+
+        addItemToBasket: function(priceListItem) {
+            if (priceListItem.isGroup) return;
+
+            var basketItem = this.basket.find(item => item.uuid === priceListItem.uuid);
+            console.log(basketItem);
+            if (basketItem) {
+                console.log("basket item found")
+                basketItem.count += 1;
+                basketItem.sum += priceListItem.price;
+                basketItem.price = priceListItem.price;
+            } else {
+                console.log("new basket item created")
+                basketItem = {
+                    rowId: this.basket.length,
+                    uuid: priceListItem.uuid,
+                    name: priceListItem.name,
+                    count: 1,
+                    price: priceListItem.price,
+                    sum: (priceListItem.price * 1)
+                }
+                this.basket.push(basketItem);
+            }
+        },
+
+        updateBasketItemSum: function(obj) {
+            if (obj) {
+                obj.sum = obj.price * obj.count;
+            }
         },
 
         getMenu: function () {
@@ -79,6 +147,14 @@ var app = new Vue({
                 })
 
                 .catch(e => this.errors.push(e));
+        },
+
+        sendOrder: function () {
+
+        },
+
+        onClickSendOrder: function() {
+
         }
     },
 
