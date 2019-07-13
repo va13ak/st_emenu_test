@@ -10,33 +10,34 @@
     <div id="app">
         <button v-on:click="getMenu">Update Menu</button>
         <ul v-if="priceList && priceList.length">
-            <li v-if="parent !== emptyParent">
+            <li v-if="parentId !== emptyParent">
                 <button v-on:click="onClickBack">
                     ...
                 </button>
             </li>
             <li v-for="priceItem in currentItems" class="priceList" v-bind:key="priceItem.code">
-                <p v-if="priceItem.hasPicture">has picture</p>
-                <button v-on:click="onClickItem" v-bind:id="priceItem.uuid">
-                    {{ getItemRepresentation(priceItem) }}
+                <button v-on:click="onClickItem" v-bind:id="priceItem.id">
+                        <img v-bind:src="priceItem.pictureURL" v-if="priceItem.hasPicture" />
+                        {{ getItemRepresentation(priceItem) }}
                 </button>
             </li>
         </ul>
         <div id="basket">
-            <h3>basket</h3>
+            <h3>basket ({{ basketTotal }})<span v-if="currentOrderId">({{ currentOrderId }})</span></h3>
             <ul v-if="basket">
                 <li v-if="!basket.length">
                     empty
                 </li>
-                <li v-for="priceItem in basket" class="basket" v-bind:key="priceItem.rowId"  v-bind:id="priceItem.rowId" v-if="priceItem && priceItem.count > 0">
-                    <button>
-                        {{ getBasketItemRepresentation(priceItem) }}
-                    </button>
+                <li v-for="priceItem in basket" class="basket" v-bind:key="priceItem.row_id" v-bind:id="priceItem.row_id"
+                    v-if="priceItem && priceItem.count > 0">
                     <button v-on:click="onIncBasketClick">
                         +
                     </button>
                     <button v-on:click="onDecBasketClick">
-                            -
+                        -
+                    </button>
+                    <button>
+                        {{ getBasketItemRepresentation(priceItem) }}
                     </button>
                     <button v-on:click="onRemoveFromBasketClick">
                         X
@@ -56,7 +57,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"
         integrity="sha256-S1J4GVHHDMiirir9qsXWc8ZWw74PHHafpsHp5PXtjTs=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="main.js" type="module"></script>
+    <script src=".//main.js" type="module"></script>
 </body>
 
 </html>

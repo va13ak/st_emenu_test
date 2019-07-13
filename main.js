@@ -1,5 +1,10 @@
 //import { parameters as config } from './config.js';
 
+Vue.component('menu-item', {
+    props: ['item'],
+    template: ''
+});
+
 var app = new Vue({
     el: "#app",
 
@@ -8,18 +13,28 @@ var app = new Vue({
         swiperSlides: [],
         priceList: [],
         basket: [],
-        parent: null,
-        errors: []
+        parentId: null,
+        errors: [],
+        priceListImages: {},
+        currentOrderId: null,
+        currentOrderDate: null,
     },
 
     computed: {
         currentItems: function () {
             return this.priceList
-                        .filter(item => item.parent === this.parent)
+                        .filter(item => item.parent_id === this.parentId)
                         .sort((a, b) => (a.isGroup === b.isGroup) 
                                         ? (a.name > b.name ? 1 : -1)
                                         : (a.isGroup ? -1 : 1))
         },
+
+        basketTotal: function () {
+            if (this.basket && this.basket.length)
+                return this.basket.reduce((accumulator, item) => accumulator + item.sum, 0);
+            else
+                return 0;
+        }
 
     },
 
@@ -44,10 +59,10 @@ var app = new Vue({
         },
 
         onClickItem: function(event) {
-            var obj = this.priceList.find(item => item.uuid === event.srcElement.id);
+            var obj = this.priceList.find(item => item.id === event.srcElement.id);
             if (obj) {
                 if (obj.isGroup) {
-                    this.parent = obj.uuid;
+                    this.parentId = obj.id;
                 } else {
                     this.addItemToBasket(obj);
                 }
@@ -55,7 +70,7 @@ var app = new Vue({
         },
 
         onRemoveFromBasketClick: function(event) {
-            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            var obj = this.basket.find(item => item.row_id == event.srcElement.parentElement.id);
             if (obj) {
                 //this.basket.splice(this.basket.indexOf(obj), 1);
                 obj.count = 0;
@@ -64,7 +79,7 @@ var app = new Vue({
         },
         
         onIncBasketClick: function(event) {
-            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            var obj = this.basket.find(item => item.row_id == event.srcElement.parentElement.id);
             if (obj) {
                 obj.count += 1;
                 this.updateBasketItemSum(obj);
@@ -72,7 +87,7 @@ var app = new Vue({
         },
 
         onDecBasketClick: function(event) {
-            var obj = this.basket.find(item => item.rowId == event.srcElement.parentElement.id);
+            var obj = this.basket.find(item => item.row_id == event.srcElement.parentElement.id);
             if (obj)
                 if (obj.count > 1)
                     obj.count -= 1;
@@ -82,19 +97,19 @@ var app = new Vue({
         },
 
         onClickBack: function(event) {
-            if (this.parent === this.enptyParent) return;
+            if (this.parentId === this.emptyParent) return;
 
-            var obj = this.priceList.find(item => item.uuid === event.srcElement.id);
+            var obj = this.priceList.find(item => item.id === event.srcElement.id);
             if (obj)
-                this.parent = obj.parent;
+                this.parentId = obj.parent_id;
             else
-                this.parent = this.emptyParent;
+                this.parentId = this.emptyParent;
         },
 
         addItemToBasket: function(priceListItem) {
             if (priceListItem.isGroup) return;
 
-            var basketItem = this.basket.find(item => item.uuid === priceListItem.uuid);
+            var basketItem = this.basket.find(item => item.id === priceListItem.id);
             console.log(basketItem);
             if (basketItem) {
                 console.log("basket item found")
@@ -104,8 +119,8 @@ var app = new Vue({
             } else {
                 console.log("new basket item created")
                 basketItem = {
-                    rowId: this.basket.length,
-                    uuid: priceListItem.uuid,
+                    row_id: this.basket.length,
+                    id: priceListItem.id,
                     name: priceListItem.name,
                     count: 1,
                     price: priceListItem.price,
@@ -122,43 +137,47 @@ var app = new Vue({
         },
 
         getMenu: function () {
-            var userName = 'user';
-            var userPass = 'password';
-            var token = btoa(userName + ':' + userPass);
             axios
-                .get("http://127.0.0.1/st_test_oduvan_834/hs/emenu/api/v1/priceList", {
-                    //withCredentials: true,
-                    crossDomain: true,
-                    headers: {
-                        //Authorization: 'Basic ${token}',
-                        Accept: 'application/json; indent=4',
-                        'Content-Type': 'application/json'
-                    },
-                    auth: {
-                        username: userName,
-                        password: userPass
-                    }
+                .get(this.baseUrl + "/hs/emenu/api/v1/priceList", {
                 })
-                //.then(response => console.log(response))
                 .then(response => {
                     this.priceList = response.data.items;
                     this.categories = response.data.categories;
-                    this.parent = this.emptyParent;
+                    this.parentId = this.emptyParent;
                 })
 
                 .catch(e => this.errors.push(e));
         },
 
         sendOrder: function () {
+            console.log(basket);
+            console.log(this.basket.filter(item => item.count != 0));
+            var respData = {
+                order_id: this.currentOrderId,
+                order_date: this.currentOrderDate,
+                items: this.basket.filter(item => item.count != 0)
+            }
+            axios
+                .post(this.baseUrl + "/hs/emenu/api/v1/updateOrder", respData)
+                //.then(response => console.log(response))
+                .then(response => {
+                    console.log(response);
+                    this.currentOrderId = response.data.order_id;
+                    this.currentOrderDate = response.data.order_date;
+                })
+
+                .catch(e => this.errors.push(e));
 
         },
 
         onClickSendOrder: function() {
-
+            this.sendOrder();
         }
     },
 
     beforeMount() {
+        var getUrl = window.location;
+        this.baseUrl = getUrl.protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
         this.init();
     }
 });
