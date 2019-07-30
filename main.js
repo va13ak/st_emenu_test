@@ -1,8 +1,42 @@
 //import { parameters as config } from './config.js';
 
-Vue.component('menu-item', {
+
+
+Vue.component('basket-item', {
     props: ['item'],
-    template: ''
+    template: '                                             \
+         <div class="basket-item" v-if="item.count">        \
+            <button v-on:click="onIncBasketClick">          \
+                +                                           \
+            </button>                                       \
+            <button v-on:click="onDecBasketClick">          \
+                -                                           \
+            </button>                                       \
+            <button>                                        \
+                {{ getBasketItemRepresentation(item) }}     \
+            </button>                                       \
+            <button v-on:click="onRemoveFromBasketClick">   \
+                X                                           \
+            </button>                                       \
+        </div>',
+    methods: {
+        getBasketItemRepresentation: function(item) {
+            return "(" + item.code + ") " + item.name + " --- " + item.count + "x" + item.price + " : " + item.sum;
+        },
+        onRemoveFromBasketClick: function() {
+            this.item.count = 0;
+            this.item.sum = 0;
+        },
+        onDecBasketClick: function() {
+            this.item.count -= 1;
+            this.item.sum = this.item.price * this.item.count;
+        },
+        onIncBasketClick: function() {
+            this.item.count += 1;
+            this.item.sum = this.item.price * this.item.count;
+        }
+    }
+
 });
 
 var app = new Vue({
@@ -138,12 +172,17 @@ var app = new Vue({
 
         getMenu: function () {
             axios
-                .get(this.baseUrl + "/hs/emenu/api/v1/priceList", {
+                .get(this.baseUrl + "/hs/emenu/api/v1/getPriceList", {
                 })
                 .then(response => {
-                    this.priceList = response.data.items;
-                    this.categories = response.data.categories;
-                    this.parentId = this.emptyParent;
+                    if (!response.data.error || response.data.error === 0) {
+                        this.priceList = response.data.items;
+                        this.categories = response.data.categories;
+                        this.parentId = this.emptyParent;
+                    } else {
+                        console.log("Error (" + response.data.error + "): " + response.data.detail);
+                        this.errors.push({ message: "Error (" + response.data.error + "): " + response.data.detail });
+                    }
                 })
 
                 .catch(e => this.errors.push(e));
@@ -162,8 +201,13 @@ var app = new Vue({
                 //.then(response => console.log(response))
                 .then(response => {
                     console.log(response);
-                    this.currentOrderId = response.data.order_id;
-                    this.currentOrderDate = response.data.order_date;
+                    if (!response.data.error || response.data.error === 0) {
+                        this.currentOrderId = response.data.order_id;
+                        this.currentOrderDate = response.data.order_date;
+                    } else {
+                        console.log("Error (" + response.data.error + "): " + response.data.detail);
+                        this.errors.push({ message: "Error (" + response.data.error + "): " + response.data.detail });
+                    }
                 })
 
                 .catch(e => this.errors.push(e));
